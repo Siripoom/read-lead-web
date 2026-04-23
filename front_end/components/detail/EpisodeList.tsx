@@ -180,10 +180,11 @@ export default function EpisodeList() {
 
   function handlePurchase(id: string) {
     const ep = displayEpisodes.find((e) => e.id === id);
-    if (ep && typeof ep.finalPrice === "number") {
-      setWalletCoins((c) => c - ep.finalPrice);
-      setPurchasedIds((prev) => new Set(prev).add(id));
-    }
+    if (!ep || typeof ep.finalPrice !== "number") return;
+
+    const purchaseCost = ep.finalPrice;
+    setWalletCoins((coins) => coins - purchaseCost);
+    setPurchasedIds((prev) => new Set(prev).add(id));
   }
 
   return (
