@@ -1,0 +1,846 @@
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>ReadLead Current-State User Journey</title>
+    <style>
+      :root {
+        color-scheme: light;
+        --bg: #f7f4f1;
+        --surface: #ffffff;
+        --surface-soft: #fbfaf8;
+        --ink: #241f1c;
+        --muted: #756c65;
+        --line: #e3dcd4;
+        --primary: #8b1a1a;
+        --primary-soft: #f3e6e3;
+        --amber: #9a5c00;
+        --green: #17664a;
+        --blue: #245985;
+        --shadow: 0 18px 45px rgba(53, 41, 32, 0.08);
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--bg);
+        color: var(--ink);
+        font-family:
+          Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", sans-serif;
+        line-height: 1.6;
+      }
+
+      main {
+        width: min(1180px, calc(100% - 32px));
+        margin: 0 auto;
+        padding: 40px 0 56px;
+      }
+
+      h1,
+      h2,
+      h3,
+      p {
+        margin: 0;
+      }
+
+      .hero {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 24px;
+        align-items: end;
+        padding: 34px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .eyebrow {
+        display: inline-flex;
+        width: fit-content;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 14px;
+        padding: 6px 10px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface-soft);
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 750;
+        letter-spacing: 0;
+      }
+
+      .eyebrow::before {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--green);
+        content: "";
+      }
+
+      h1 {
+        max-width: 760px;
+        font-size: clamp(32px, 5vw, 54px);
+        line-height: 1.08;
+        letter-spacing: 0;
+      }
+
+      .hero-copy {
+        max-width: 760px;
+        margin-top: 14px;
+        color: var(--muted);
+        font-size: 16px;
+      }
+
+      .meta {
+        min-width: 260px;
+        padding: 18px;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface-soft);
+      }
+
+      .meta dl {
+        display: grid;
+        gap: 10px;
+        margin: 0;
+      }
+
+      .meta div {
+        display: grid;
+        gap: 2px;
+      }
+
+      dt {
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+
+      dd {
+        margin: 0;
+        font-size: 14px;
+        font-weight: 700;
+      }
+
+      section {
+        margin-top: 28px;
+      }
+
+      .section-heading {
+        display: flex;
+        align-items: end;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 14px;
+      }
+
+      h2 {
+        font-size: 24px;
+        line-height: 1.2;
+        letter-spacing: 0;
+      }
+
+      .section-note {
+        max-width: 560px;
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .persona-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .persona-card,
+      .transition-card,
+      .route-card {
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .persona-card {
+        padding: 20px;
+      }
+
+      .persona-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 16px;
+      }
+
+      .role-label {
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--primary-soft);
+        color: var(--primary);
+        font-size: 12px;
+        font-weight: 800;
+      }
+
+      .role-label.user {
+        background: #e8f0f7;
+        color: var(--blue);
+      }
+
+      .role-label.creator {
+        background: #e9f4ef;
+        color: var(--green);
+      }
+
+      h3 {
+        font-size: 20px;
+        letter-spacing: 0;
+      }
+
+      .fact-list {
+        display: grid;
+        gap: 12px;
+      }
+
+      .fact {
+        display: grid;
+        gap: 2px;
+      }
+
+      .fact strong {
+        font-size: 13px;
+      }
+
+      .fact span {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .journey {
+        overflow: hidden;
+        border: 1px solid var(--line);
+        border-radius: 8px;
+        background: var(--surface);
+        box-shadow: var(--shadow);
+      }
+
+      .journey-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        padding: 20px 22px;
+        border-bottom: 1px solid var(--line);
+        background: var(--surface-soft);
+      }
+
+      .journey-header p {
+        color: var(--muted);
+        font-size: 14px;
+      }
+
+      .journey-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      .journey-table th,
+      .journey-table td {
+        padding: 16px 18px;
+        border-bottom: 1px solid var(--line);
+        vertical-align: top;
+        text-align: left;
+      }
+
+      .journey-table tr:last-child td {
+        border-bottom: 0;
+      }
+
+      .journey-table th {
+        background: #f2ede8;
+        color: var(--muted);
+        font-size: 12px;
+        font-weight: 800;
+        text-transform: uppercase;
+      }
+
+      .stage {
+        min-width: 145px;
+        font-weight: 800;
+      }
+
+      .touchpoints {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+
+      code,
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        min-height: 24px;
+        padding: 3px 7px;
+        border: 1px solid var(--line);
+        border-radius: 999px;
+        background: var(--surface-soft);
+        color: var(--primary);
+        font-family:
+          "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .note {
+        color: var(--muted);
+      }
+
+      .pain {
+        color: var(--amber);
+        font-weight: 700;
+      }
+
+      .transition-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 14px;
+      }
+
+      .transition-card {
+        padding: 20px;
+      }
+
+      .transition-card p {
+        margin-top: 8px;
+        color: var(--muted);
+      }
+
+      .route-grid {
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .route-card {
+        padding: 14px;
+      }
+
+      .route-card code {
+        margin-bottom: 8px;
+      }
+
+      .route-card p {
+        color: var(--muted);
+        font-size: 13px;
+      }
+
+      footer {
+        margin-top: 28px;
+        color: var(--muted);
+        font-size: 13px;
+        text-align: center;
+      }
+
+      @media (max-width: 980px) {
+        .hero,
+        .persona-grid,
+        .transition-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .route-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .meta {
+          min-width: 0;
+        }
+      }
+
+      @media (max-width: 760px) {
+        main {
+          width: min(100% - 24px, 1180px);
+          padding-top: 24px;
+        }
+
+        .hero {
+          padding: 22px;
+        }
+
+        .section-heading {
+          display: grid;
+        }
+
+        .journey-header {
+          display: grid;
+          padding: 18px;
+        }
+
+        .journey-table,
+        .journey-table thead,
+        .journey-table tbody,
+        .journey-table th,
+        .journey-table td,
+        .journey-table tr {
+          display: block;
+        }
+
+        .journey-table thead {
+          display: none;
+        }
+
+        .journey-table tr {
+          border-bottom: 1px solid var(--line);
+        }
+
+        .journey-table tr:last-child {
+          border-bottom: 0;
+        }
+
+        .journey-table td {
+          display: grid;
+          grid-template-columns: 118px minmax(0, 1fr);
+          gap: 14px;
+          padding: 12px 16px;
+          border-bottom: 0;
+        }
+
+        .journey-table td::before {
+          color: var(--muted);
+          font-size: 12px;
+          font-weight: 800;
+          text-transform: uppercase;
+          content: attr(data-label);
+        }
+
+        .stage {
+          min-width: 0;
+        }
+      }
+
+      @media (max-width: 520px) {
+        h1 {
+          font-size: 34px;
+        }
+
+        .route-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .journey-table td {
+          grid-template-columns: 1fr;
+          gap: 4px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header class="hero">
+        <div>
+          <p class="eyebrow">Current app journey</p>
+          <h1>ReadLead User Journey: Guest, User, Creator</h1>
+          <p class="hero-copy">
+            เอกสารนี้สรุป journey ปัจจุบันของ ReadLead จาก flow ที่มีอยู่ใน
+            prototype: การค้นพบคอนเทนต์, การอ่าน, การสมัครสมาชิก, wallet,
+            การปลดล็อกตอน, และ creator studio
+          </p>
+        </div>
+        <aside class="meta" aria-label="Document metadata">
+          <dl>
+            <div>
+              <dt>Scope</dt>
+              <dd>Current-state journey map</dd>
+            </div>
+            <div>
+              <dt>Audience</dt>
+              <dd>Product, Design, Engineering</dd>
+            </div>
+            <div>
+              <dt>Source</dt>
+              <dd>ReadLead front_end routes and components</dd>
+            </div>
+          </dl>
+        </aside>
+      </header>
+
+      <section aria-labelledby="persona-overview">
+        <div class="section-heading">
+          <h2 id="persona-overview">Persona Overview</h2>
+          <p class="section-note">
+            สรุปเป้าหมาย, จุดเริ่มต้น, และผลลัพธ์ที่ถือว่าสำเร็จของแต่ละ role
+            ตาม behavior ปัจจุบันในแอป
+          </p>
+        </div>
+
+        <div class="persona-grid">
+          <article class="persona-card">
+            <div class="persona-top">
+              <h3>Guest</h3>
+              <span class="role-label">ผู้อ่านทั่วไป</span>
+            </div>
+            <div class="fact-list">
+              <div class="fact">
+                <strong>Goal</strong>
+                <span>สำรวจเรื่องที่น่าสนใจและทดลองอ่านตอนฟรีก่อนสมัคร</span>
+              </div>
+              <div class="fact">
+                <strong>Entry point</strong>
+                <span><code>/</code>, <code>/discover</code>, category links</span>
+              </div>
+              <div class="fact">
+                <strong>Success outcome</strong>
+                <span>เจอเรื่องที่อยากอ่านต่อ แล้วไป <code>/login</code> หรือ <code>/register</code></span>
+              </div>
+            </div>
+          </article>
+
+          <article class="persona-card">
+            <div class="persona-top">
+              <h3>User</h3>
+              <span class="role-label user">สมาชิก</span>
+            </div>
+            <div class="fact-list">
+              <div class="fact">
+                <strong>Goal</strong>
+                <span>อ่านต่อเนื่อง, ปลดล็อกตอน, เก็บเรื่องโปรด, สนับสนุนนักเขียน</span>
+              </div>
+              <div class="fact">
+                <strong>Entry point</strong>
+                <span><code>/login</code>, <code>/register</code>, <code>/dashboard</code></span>
+              </div>
+              <div class="fact">
+                <strong>Success outcome</strong>
+                <span>อ่าน/ซื้อ/โหวต/โดเนทได้ และกลับมาดูประวัติใน dashboard</span>
+              </div>
+            </div>
+          </article>
+
+          <article class="persona-card">
+            <div class="persona-top">
+              <h3>Creator</h3>
+              <span class="role-label creator">นักเขียน</span>
+            </div>
+            <div class="fact-list">
+              <div class="fact">
+                <strong>Goal</strong>
+                <span>สร้างผลงาน, จัดการตอน, ตั้งราคา/โปรโมชัน, ดูรายได้</span>
+              </div>
+              <div class="fact">
+                <strong>Entry point</strong>
+                <span><code>/creator</code>, <code>/creator?tab=works</code></span>
+              </div>
+              <div class="fact">
+                <strong>Success outcome</strong>
+                <span>ส่งงานเผยแพร่/รอตรวจ, ติดตาม revenue, ขอถอนเงินได้</span>
+              </div>
+            </div>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="guest-journey">
+        <article class="journey">
+          <div class="journey-header">
+            <div>
+              <h2 id="guest-journey">Guest Journey</h2>
+              <p>ผู้ใช้ยังไม่ login สามารถ browse, ดูรายละเอียด, และอ่านตอนฟรีได้</p>
+            </div>
+            <span class="role-label">Guest</span>
+          </div>
+          <table class="journey-table">
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th>User Action</th>
+                <th>Touchpoint</th>
+                <th>System Behavior</th>
+                <th>Pain Point / Current Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="stage" data-label="Stage">Discover</td>
+                <td data-label="User Action">เข้า Home, ดู hero, genre, carousel, ranking, latest update</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/</code><span class="chip">HeroSlider</span><span class="chip">GenreSelector</span></div>
+                </td>
+                <td data-label="System Behavior">แสดง mock books, ad placement, หมวดหมู่ และลิงก์ไปหน้า discover/detail</td>
+                <td class="note" data-label="Pain Point / Current Note">ข้อมูลยังเป็น mock และ personalization ยังไม่ได้มาจาก account จริง</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Search & Filter</td>
+                <td data-label="User Action">เลือกหมวดหมู่, ค้นหาชื่อ/ผู้เขียน/tag, sort, filter free/paid</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/discover</code><span class="chip">Search</span><span class="chip">Price filter</span></div>
+                </td>
+                <td data-label="System Behavior">กรองรายการจาก <code>MOCK_BOOKS</code> ใน client state</td>
+                <td class="note" data-label="Pain Point / Current Note">ผลลัพธ์ไม่ persist และ sort ใหม่ยังเป็น mock behavior</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Evaluate Story</td>
+                <td data-label="User Action">เปิดหน้ารายละเอียดเพื่อดูปก, rating, synopsis, tags, episode list, comment, related</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/detail</code><span class="chip">ContentHeader</span><span class="chip">EpisodeList</span></div>
+                </td>
+                <td data-label="System Behavior">แสดง metadata เรื่อง The Obsidian Chronicles และตอนแบบ grouped list</td>
+                <td class="note" data-label="Pain Point / Current Note">Bookmark/follow เป็น state ในหน้า ไม่ผูกกับ guest account</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Read Free</td>
+                <td data-label="User Action">กดอ่านตอนฟรีแล้วเข้าสู่ reader</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/reader</code><span class="chip">ReaderContent</span><span class="chip">ReaderToolbar</span></div>
+                </td>
+                <td data-label="System Behavior">แสดง chapter content, toolbar, line comments, และ ad banner</td>
+                <td class="note" data-label="Pain Point / Current Note">Guest อ่านได้เฉพาะตอนที่เปิดฟรีหรือ content mock ใน reader</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Hit Paywall</td>
+                <td data-label="User Action">เจอตอน locked/paid และกดปลดล็อก</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><span class="chip">PurchaseEpisodeModal</span><code>/dashboard</code></div>
+                </td>
+                <td data-label="System Behavior">เปิด modal สรุปราคาและ balance; ถ้าเหรียญไม่พอมีลิงก์ไป dashboard เพื่อ top up</td>
+                <td class="pain" data-label="Pain Point / Current Note">Current prototype ยังไม่ได้บังคับ login ชัดเจนก่อนซื้อทุกจุด</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Convert</td>
+                <td data-label="User Action">สมัครสมาชิกหรือเข้าสู่ระบบ</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/register</code><code>/login</code></div>
+                </td>
+                <td data-label="System Behavior">mock auth ตั้ง role เป็น <code>user</code> แล้ว redirect ไป <code>/</code></td>
+                <td class="note" data-label="Pain Point / Current Note">ยังไม่มี backend auth, validation เชิงธุรกิจ, หรือ session จริง</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section aria-labelledby="user-journey">
+        <article class="journey">
+          <div class="journey-header">
+            <div>
+              <h2 id="user-journey">User Journey</h2>
+              <p>สมาชิกอ่านต่อ, เติมเหรียญ, ปลดล็อกตอน, โหวต, โดเนท, และกลับมาดู library ได้</p>
+            </div>
+            <span class="role-label user">User</span>
+          </div>
+          <table class="journey-table">
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th>User Action</th>
+                <th>Touchpoint</th>
+                <th>System Behavior</th>
+                <th>Pain Point / Current Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="stage" data-label="Stage">Authenticate</td>
+                <td data-label="User Action">login หรือ register ด้วยฟอร์ม mock</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/login</code><code>/register</code><span class="chip">RoleContext</span></div>
+                </td>
+                <td data-label="System Behavior">ตั้ง role เป็น <code>user</code> ใน localStorage และถือว่า logged in</td>
+                <td class="note" data-label="Pain Point / Current Note">ยังไม่มี account profile จริงหรือ token/session จาก server</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Manage Library</td>
+                <td data-label="User Action">เปิด dashboard เพื่อดู profile, wallet, bookmarks, purchase history, following</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/dashboard</code><span class="chip">WalletCard</span><span class="chip">BookmarkList</span></div>
+                </td>
+                <td data-label="System Behavior">RouteGuard อนุญาต role user/creator/admin และแสดงข้อมูล mock</td>
+                <td class="note" data-label="Pain Point / Current Note">Bookmark, following, purchase history ส่วนใหญ่เป็น mock list ไม่ได้ sync กับ action จริงทั้งหมด</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Top Up Coins</td>
+                <td data-label="User Action">เลือก coin package และ payment method</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><span class="chip">TopUpModal</span><span class="chip">Credit card</span><span class="chip">PromptPay</span><span class="chip">TrueMoney</span></div>
+                </td>
+                <td data-label="System Behavior">จำลอง payment success, เพิ่ม coins ใน wallet, อัปเดต VIP top-up state</td>
+                <td class="note" data-label="Pain Point / Current Note">coins มีทั้ง component state และ localStorage utility ทำให้ยังไม่เป็น single source of truth</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Unlock & Read</td>
+                <td data-label="User Action">กดปลดล็อกตอน paid แล้วอ่านต่อ</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/detail</code><span class="chip">PurchaseEpisodeModal</span><code>/reader</code></div>
+                </td>
+                <td data-label="System Behavior">หัก coins ใน modal state, mark ตอนเป็น purchased, แล้ว navigate ไป reader</td>
+                <td class="note" data-label="Pain Point / Current Note">สถานะ purchased ใน episode list ยังเป็น state ของหน้า ไม่ใช่ purchase ledger จริง</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Support Story</td>
+                <td data-label="User Action">bookmark, follow, vote ด้วย ticket, donate coins ให้ผู้เขียน</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><span class="chip">ContentHeader</span><span class="chip">DonateModal</span><span class="chip">VIP tickets</span></div>
+                </td>
+                <td data-label="System Behavior">vote/donation บันทึกใน localStorage ผ่าน VIP/coins utility</td>
+                <td class="note" data-label="Pain Point / Current Note">Bookmark/follow ยังไม่ persist ระหว่างหน้า ส่วน donation ใช้ mock coin balance</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Return</td>
+                <td data-label="User Action">กลับมาดูเรื่องที่ติดตามและประวัติการซื้อ</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/dashboard</code><span class="chip">PurchaseHistory</span><span class="chip">FollowedStories</span></div>
+                </td>
+                <td data-label="System Behavior">แสดงรายการ mock เพื่อช่วยจำลอง library state</td>
+                <td class="pain" data-label="Pain Point / Current Note">ยังไม่มี real retention loop เช่น notification จากเรื่องที่ follow</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section aria-labelledby="creator-journey">
+        <article class="journey">
+          <div class="journey-header">
+            <div>
+              <h2 id="creator-journey">Creator Journey</h2>
+              <p>นักเขียนใช้ creator studio เพื่อจัดการผลงาน ตอน ราคา โปรโมชัน และการถอนรายได้</p>
+            </div>
+            <span class="role-label creator">Creator</span>
+          </div>
+          <table class="journey-table">
+            <thead>
+              <tr>
+                <th>Stage</th>
+                <th>User Action</th>
+                <th>Touchpoint</th>
+                <th>System Behavior</th>
+                <th>Pain Point / Current Note</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="stage" data-label="Stage">Access Studio</td>
+                <td data-label="User Action">เข้าเมนูจัดการนิยายหรือเปิด creator studio</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/creator</code><code>/creator?tab=works</code><span class="chip">RouteGuard</span></div>
+                </td>
+                <td data-label="System Behavior">อนุญาตเฉพาะ role <code>creator</code> และ <code>admin</code>; role อื่นเห็น Access Denied</td>
+                <td class="note" data-label="Pain Point / Current Note">การเปลี่ยนเป็น creator ใน prototype ใช้ role switcher/localStorage</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Review Overview</td>
+                <td data-label="User Action">ดูรายได้รวม, จำนวนนิยาย, จำนวนตอน, ผู้อ่าน, latest updates</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><span class="chip">CreatorStudioHome</span><span class="chip">RevenueChart</span><span class="chip">StatCard</span></div>
+                </td>
+                <td data-label="System Behavior">คำนวณจาก creator studio seed/local state และแสดงภาพรวมใน tab overview</td>
+                <td class="note" data-label="Pain Point / Current Note">metrics ยังเป็น mock และไม่สะท้อน analytics จริง</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Create Work</td>
+                <td data-label="User Action">กดเพิ่มนิยาย, เลือกประเภท novel/manga/audiobook, กรอกข้อมูลเรื่อง</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/creator/works/new</code><code>/creator/works/new/[type]</code></div>
+                </td>
+                <td data-label="System Behavior">สร้าง work ด้วย title, synopsis, cover, tags, status, type-specific form และ optional promotion</td>
+                <td class="note" data-label="Pain Point / Current Note">ประเภทผลงานกำหนดฟอร์มและเปลี่ยนไม่ได้หลังสร้างตาม copy ปัจจุบัน</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Manage Works</td>
+                <td data-label="User Action">ดูรายการนิยาย, เปิดรายละเอียด, แก้ไข, ลบ, ดูจำนวนตอน/รายได้/status</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/creator/works/[workId]</code><code>/creator/works/[workId]/edit</code></div>
+                </td>
+                <td data-label="System Behavior">อ่าน/แก้ไข/ลบจาก CreatorStudioContext และกลับไป tab works</td>
+                <td class="note" data-label="Pain Point / Current Note">delete และ edit เป็น local state; ยังไม่มี audit trail หรือ approval backend</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Create Episodes</td>
+                <td data-label="User Action">เพิ่มตอน, เลือกประเภทตอน, upload TXT/DOCX/image/audio, เขียนเนื้อหา, ตั้งราคาและ release date</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/creator/works/[workId]/episodes/new</code><span class="chip">Tiptap</span><span class="chip">docx-preview</span></div>
+                </td>
+                <td data-label="System Behavior">รองรับ novel editor/นำเข้าไฟล์, manga pages, audiobook file/transcript, อัปโหลดหลายตอน, price policy, promotion</td>
+                <td class="note" data-label="Pain Point / Current Note">ไฟล์ถูกอ่านเป็น data URL/client state ยังไม่มี asset storage จริง</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Publish & Monetize</td>
+                <td data-label="User Action">บันทึก draft, schedule, publish, ตั้ง episode/work promotion</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><code>/creator/works/[workId]/episodes/[episodeId]/edit</code><span class="chip">Status</span><span class="chip">Promotion</span></div>
+                </td>
+                <td data-label="System Behavior">บันทึก status <code>draft</code>, <code>scheduled</code>, <code>published</code> และ resolve ราคา promotion ตอนอ่าน</td>
+                <td class="pain" data-label="Pain Point / Current Note">approval/status เป็น mock; ยังไม่มี moderation หรือ publishing workflow จริง</td>
+              </tr>
+              <tr>
+                <td class="stage" data-label="Stage">Withdraw</td>
+                <td data-label="User Action">กด Request Withdrawal, กรอก amount และ method</td>
+                <td data-label="Touchpoint">
+                  <div class="touchpoints"><span class="chip">WithdrawButton</span><span class="chip">Bank Transfer</span><span class="chip">PayPal</span><span class="chip">PromptPay</span></div>
+                </td>
+                <td data-label="System Behavior">เปิด modal ถอนเงินพร้อม available balance mock</td>
+                <td class="note" data-label="Pain Point / Current Note">ปุ่ม confirm ยังเป็น UI mock ไม่ได้สร้าง withdrawal request จริง</td>
+              </tr>
+            </tbody>
+          </table>
+        </article>
+      </section>
+
+      <section aria-labelledby="role-transition">
+        <div class="section-heading">
+          <h2 id="role-transition">Role Transition Summary</h2>
+          <p class="section-note">
+            สรุปการเปลี่ยน role และ route guard ตาม prototype ปัจจุบัน
+          </p>
+        </div>
+        <div class="transition-grid">
+          <article class="transition-card">
+            <h3>Guest -> User</h3>
+            <p>
+              ผู้ใช้เริ่มจากการ browse ที่ <code>/</code> หรือ <code>/discover</code>
+              แล้วไป <code>/login</code> หรือ <code>/register</code>. เมื่อ submit form
+              mock auth จะตั้ง role เป็น <code>user</code> ผ่าน RoleContext/localStorage
+              และ redirect กลับหน้าแรก
+            </p>
+          </article>
+          <article class="transition-card">
+            <h3>User/Creator/Admin Access</h3>
+            <p>
+              <code>/dashboard</code> เปิดให้ user, creator, admin.
+              <code>/creator</code> เปิดให้ creator และ admin เท่านั้น.
+              หาก role ไม่ตรง RouteGuard จะแสดง Access Denied พร้อมลิงก์กลับหน้าแรก
+            </p>
+          </article>
+        </div>
+      </section>
+
+      <section aria-labelledby="route-check">
+        <div class="section-heading">
+          <h2 id="route-check">Route Reference</h2>
+          <p class="section-note">route สำคัญที่ journey map นี้อ้างอิงจากแอปปัจจุบัน</p>
+        </div>
+        <div class="route-grid">
+          <article class="route-card"><code>/</code><p>Home discovery surface</p></article>
+          <article class="route-card"><code>/discover</code><p>Search, genre, sort, price filter</p></article>
+          <article class="route-card"><code>/detail</code><p>Story detail, episode list, votes, donate</p></article>
+          <article class="route-card"><code>/reader</code><p>Reading experience and line comments</p></article>
+          <article class="route-card"><code>/login</code><p>Mock sign-in to user role</p></article>
+          <article class="route-card"><code>/register</code><p>Mock account creation to user role</p></article>
+          <article class="route-card"><code>/dashboard</code><p>Wallet, bookmarks, purchase history, following</p></article>
+          <article class="route-card"><code>/creator</code><p>Creator studio overview and works management</p></article>
+        </div>
+      </section>
+
+      <footer>
+        Static HTML document. No module loading, no build step, no external dependencies.
+      </footer>
+    </main>
+  </body>
+</html>

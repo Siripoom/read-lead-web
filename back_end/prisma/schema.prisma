@@ -1,0 +1,496 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  userId          BigInt    @id @default(autoincrement()) @map("user_id")
+  username        String    @db.VarChar(50)
+  email           String    @db.VarChar(255)
+  passwordHash    String?   @map("password_hash") @db.Text
+  coinBalance     Int       @default(0) @map("coin_balance")
+  role            String    @default("user") @db.VarChar(20)
+  isActive        Boolean   @default(true) @map("is_active")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt       DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  userRoles             UserRole[]
+  userSocials           UserSocial[]
+  authoredNovels        Novel[]               @relation("NovelAuthor")
+  readingLibraries      ReadingLibrary[]
+  topupTransactions     TopupTransaction[]
+  walletEntries         WalletLedger[]        @relation("WalletUser")
+  walletCreatedEntries  WalletLedger[]        @relation("WalletCreatedBy")
+  packagePurchases      PackagePurchase[]
+  chapterPurchases      ChapterPurchase[]
+  creatorEarnings       CreatorEarning[]      @relation("EarningCreator")
+  payoutRequests        PayoutRequest[]       @relation("PayoutRequestCreator")
+  reviewedPayoutRequest PayoutRequest[]       @relation("PayoutRequestReviewer")
+  payouts               Payout[]
+  moderationLogs        NovelModerationLog[]  @relation("ModerationAdmin")
+  comments              Comment[]
+  notifications         Notification[]
+  reportedReports       UserReport[]          @relation("ReportReporter")
+  handledReports        UserReport[]          @relation("ReportHandler")
+  payoutAccounts        CreatorPayoutAccount[]
+
+  @@index([role], map: "ix_users_role")
+  @@map("users")
+}
+
+model UserRole {
+  id        BigInt   @id @default(autoincrement())
+  userId    BigInt   @map("user_id")
+  role      String   @db.VarChar(20)
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([userId, role])
+  @@map("user_roles")
+}
+
+model UserSocial {
+  socialId    String   @id @default(dbgenerated("gen_random_uuid()")) @map("social_id") @db.Uuid
+  userId      BigInt   @map("user_id")
+  provider    String   @db.VarChar(30)
+  providerUid String   @map("provider_uid") @db.VarChar(255)
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@unique([provider, providerUid])
+  @@map("user_socials")
+}
+
+model Novel {
+  novelId             BigInt    @id @default(autoincrement()) @map("novel_id")
+  authorId            BigInt    @map("author_id")
+  title               String    @db.VarChar(255)
+  slug                String?   @db.VarChar(255)
+  synopsis            String?   @db.Text
+  coverImageUrl       String?   @map("cover_image_url") @db.Text
+  writerSharePercent  Decimal   @default(70.00) @map("writer_share_percent") @db.Decimal(5, 2)
+  status              String    @default("draft") @db.VarChar(20)
+  visibility          String    @default("public") @db.VarChar(20)
+  rejectionReason     String?   @map("rejection_reason") @db.Text
+  publishedAt         DateTime? @map("published_at") @db.Timestamptz(6)
+  totalChapters       Int       @default(0) @map("total_chapters")
+  totalViews          BigInt    @default(0) @map("total_views")
+  followerCount       BigInt    @default(0) @map("follower_count")
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt           DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  author         User                  @relation("NovelAuthor", fields: [authorId], references: [userId], onDelete: Restrict)
+  chapters       Chapter[]
+  packages       NovelPackage[]
+  readingLibrary ReadingLibrary[]
+  moderationLogs NovelModerationLog[]
+  comments       Comment[]
+  earnings       CreatorEarning[]
+
+  @@index([authorId], map: "ix_novels_author_id")
+  @@index([status], map: "ix_novels_status")
+  @@index([visibility], map: "ix_novels_visibility")
+  @@index([createdAt], map: "ix_novels_created_at")
+  @@map("novels")
+}
+
+model Chapter {
+  chapterId    BigInt    @id @default(autoincrement()) @map("chapter_id")
+  novelId      BigInt    @map("novel_id")
+  chapterNo    Int       @map("chapter_no")
+  title        String    @db.VarChar(255)
+  contentText  String?   @map("content_text") @db.Text
+  coinPrice    Int       @default(0) @map("coin_price")
+  isFree       Boolean   @default(true) @map("is_free")
+  status       String    @default("draft") @db.VarChar(20)
+  previewText  String?   @map("preview_text") @db.Text
+  wordCount    Int       @default(0) @map("word_count")
+  publishedAt  DateTime? @map("published_at") @db.Timestamptz(6)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+  deletedAt    DateTime? @map("deleted_at") @db.Timestamptz(6)
+
+  novel                Novel             @relation(fields: [novelId], references: [novelId], onDelete: Cascade)
+  chapterAudio         ChapterAudio?
+  packageItems         PackageItem[]
+  chapterPurchases     ChapterPurchase[]
+  comments             Comment[]
+  earnings             CreatorEarning[]
+  lastReadInLibraries  ReadingLibrary[]  @relation("LastReadChapter")
+
+  @@index([novelId], map: "ix_chapters_novel_id")
+  @@index([status], map: "ix_chapters_status")
+  @@index([publishedAt], map: "ix_chapters_published_at")
+  @@map("chapters")
+}
+
+model ChapterAudio {
+  audioId          String   @id @default(dbgenerated("gen_random_uuid()")) @map("audio_id") @db.Uuid
+  chapterId        BigInt   @unique @map("chapter_id")
+  fileUrl          String   @map("file_url") @db.Text
+  durationSeconds  Int?     @map("duration_seconds")
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  chapter Chapter @relation(fields: [chapterId], references: [chapterId], onDelete: Cascade)
+
+  @@map("chapter_audios")
+}
+
+model NovelPackage {
+  packageId     BigInt    @id @default(autoincrement()) @map("package_id")
+  novelId       BigInt    @map("novel_id")
+  packageName   String    @map("package_name") @db.VarChar(150)
+  description   String?   @db.Text
+  priceCoin     Int       @map("price_coin")
+  status        String    @default("active") @db.VarChar(20)
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt     DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  novel            Novel              @relation(fields: [novelId], references: [novelId], onDelete: Cascade)
+  packageItems     PackageItem[]
+  packagePurchases PackagePurchase[]
+
+  @@index([novelId], map: "ix_novel_packages_novel_id")
+  @@index([status], map: "ix_novel_packages_status")
+  @@map("novel_packages")
+}
+
+model PackageItem {
+  id        BigInt   @id @default(autoincrement())
+  packageId BigInt   @map("package_id")
+  chapterId BigInt   @map("chapter_id")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  novelPackage NovelPackage @relation(fields: [packageId], references: [packageId], onDelete: Cascade)
+  chapter      Chapter      @relation(fields: [chapterId], references: [chapterId], onDelete: Cascade)
+
+  @@unique([packageId, chapterId])
+  @@index([packageId], map: "ix_package_items_package_id")
+  @@index([chapterId], map: "ix_package_items_chapter_id")
+  @@map("package_items")
+}
+
+model ReadingLibrary {
+  id                   BigInt    @id @default(autoincrement())
+  userId               BigInt    @map("user_id")
+  novelId              BigInt    @map("novel_id")
+  isFavorite           Boolean   @default(false) @map("is_favorite")
+  isFollowing          Boolean   @default(true) @map("is_following")
+  notificationEnabled  Boolean   @default(true) @map("notification_enabled")
+  lastReadChapterId    BigInt?   @map("last_read_chapter_id")
+  lastReadAt           DateTime? @map("last_read_at") @db.Timestamptz(6)
+  addedAt              DateTime  @default(now()) @map("added_at") @db.Timestamptz(6)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user            User    @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  novel           Novel   @relation(fields: [novelId], references: [novelId], onDelete: Cascade)
+  lastReadChapter Chapter? @relation("LastReadChapter", fields: [lastReadChapterId], references: [chapterId], onDelete: SetNull)
+
+  @@unique([userId, novelId])
+  @@index([userId], map: "ix_reading_library_user_id")
+  @@index([novelId], map: "ix_reading_library_novel_id")
+  @@map("reading_library")
+}
+
+model TopupTransaction {
+  transactionId         String    @id @default(dbgenerated("gen_random_uuid()")) @map("transaction_id") @db.Uuid
+  userId                BigInt    @map("user_id")
+  amountMoney           Decimal   @map("amount_money") @db.Decimal(12, 2)
+  amountCoins           Int       @map("amount_coins")
+  currency              String    @default("THB") @db.Char(3)
+  paymentMethod         String    @default("manual") @map("payment_method") @db.VarChar(30)
+  gatewayName           String?   @map("gateway_name") @db.VarChar(50)
+  gatewayTransactionId  String?   @map("gateway_transaction_id") @db.VarChar(255)
+  paymentReference      String?   @map("payment_reference") @db.VarChar(255)
+  status                String    @default("pending") @db.VarChar(20)
+  failureReason         String?   @map("failure_reason") @db.Text
+  initiatedAt           DateTime  @default(now()) @map("initiated_at") @db.Timestamptz(6)
+  paidAt                DateTime? @map("paid_at") @db.Timestamptz(6)
+  expiredAt             DateTime? @map("expired_at") @db.Timestamptz(6)
+  confirmedAt           DateTime? @map("confirmed_at") @db.Timestamptz(6)
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Restrict)
+
+  @@index([userId], map: "ix_topup_transactions_user_id")
+  @@index([status], map: "ix_topup_transactions_status")
+  @@index([userId, status], map: "ix_topup_transactions_user_status")
+  @@index([paidAt], map: "ix_topup_transactions_paid_at")
+  @@map("topup_transactions")
+}
+
+model PaymentLog {
+  logId            String    @id @default(dbgenerated("gen_random_uuid()")) @map("log_id") @db.Uuid
+  entityType       String    @map("entity_type") @db.VarChar(30)
+  entityId         String    @map("entity_id") @db.VarChar(100)
+  provider         String?   @db.VarChar(50)
+  eventType        String    @map("event_type") @db.VarChar(100)
+  requestPayload   Json?     @map("request_payload")
+  responsePayload  Json?     @map("response_payload")
+  rawRequest       String?   @map("raw_request") @db.Text
+  httpStatusCode   Int?      @map("http_status_code")
+  logStatus        String    @default("info") @map("log_status") @db.VarChar(20)
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([entityType, entityId], map: "ix_payment_logs_entity")
+  @@index([createdAt], map: "ix_payment_logs_created_at")
+  @@map("payment_logs")
+}
+
+model WalletLedger {
+  ledgerId        String    @id @default(dbgenerated("gen_random_uuid()")) @map("ledger_id") @db.Uuid
+  userId          BigInt    @map("user_id")
+  entryType       String    @map("entry_type") @db.VarChar(30)
+  direction       String    @db.VarChar(10)
+  coinAmount      Int       @map("coin_amount")
+  balanceBefore   Int       @map("balance_before")
+  balanceAfter    Int       @map("balance_after")
+  refType         String?   @map("ref_type") @db.VarChar(30)
+  refId           String?   @map("ref_id") @db.VarChar(100)
+  note            String?   @db.Text
+  createdBy       BigInt?   @map("created_by")
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user          User  @relation("WalletUser", fields: [userId], references: [userId], onDelete: Restrict)
+  createdByUser User? @relation("WalletCreatedBy", fields: [createdBy], references: [userId], onDelete: SetNull)
+
+  @@index([userId], map: "ix_wallet_ledger_user_id")
+  @@index([entryType], map: "ix_wallet_ledger_entry_type")
+  @@index([refType, refId], map: "ix_wallet_ledger_ref")
+  @@index([createdAt], map: "ix_wallet_ledger_created_at")
+  @@map("wallet_ledger")
+}
+
+model PackagePurchase {
+  pkgTransId   String    @id @default(dbgenerated("gen_random_uuid()")) @map("pkg_trans_id") @db.Uuid
+  userId       BigInt    @map("user_id")
+  packageId    BigInt    @map("package_id")
+  coinPaid     Int       @map("coin_paid")
+  purchasedAt  DateTime  @default(now()) @map("purchased_at") @db.Timestamptz(6)
+  status       String    @default("active") @db.VarChar(20)
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user             User              @relation(fields: [userId], references: [userId], onDelete: Restrict)
+  novelPackage     NovelPackage      @relation(fields: [packageId], references: [packageId], onDelete: Restrict)
+  chapterPurchases ChapterPurchase[] @relation("PurchaseFromPackage")
+
+  @@index([userId], map: "ix_package_purchases_user_id")
+  @@index([packageId], map: "ix_package_purchases_package_id")
+  @@index([purchasedAt], map: "ix_package_purchases_purchased_at")
+  @@map("package_purchases")
+}
+
+model ChapterPurchase {
+  purchaseId      String    @id @default(dbgenerated("gen_random_uuid()")) @map("purchase_id") @db.Uuid
+  userId          BigInt    @map("user_id")
+  chapterId       BigInt    @map("chapter_id")
+  coinAmount      Int       @map("coin_amount")
+  sourceType      String    @map("source_type") @db.VarChar(20)
+  refPkgTransId   String?   @map("ref_pkg_trans_id") @db.Uuid
+  status          String    @default("active") @db.VarChar(20)
+  purchasedAt     DateTime  @default(now()) @map("purchased_at") @db.Timestamptz(6)
+  createdAt       DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user            User             @relation(fields: [userId], references: [userId], onDelete: Restrict)
+  chapter         Chapter          @relation(fields: [chapterId], references: [chapterId], onDelete: Restrict)
+  packagePurchase PackagePurchase? @relation("PurchaseFromPackage", fields: [refPkgTransId], references: [pkgTransId], onDelete: SetNull)
+
+  @@index([userId], map: "ix_chapter_purchases_user_id")
+  @@index([chapterId], map: "ix_chapter_purchases_chapter_id")
+  @@index([refPkgTransId], map: "ix_chapter_purchases_ref_pkg_trans_id")
+  @@index([purchasedAt], map: "ix_chapter_purchases_purchased_at")
+  @@map("chapter_purchases")
+}
+
+model CreatorEarning {
+  earningId          String    @id @default(dbgenerated("gen_random_uuid()")) @map("earning_id") @db.Uuid
+  creatorId          BigInt    @map("creator_id")
+  novelId            BigInt    @map("novel_id")
+  chapterId          BigInt?   @map("chapter_id")
+  sourceType         String    @map("source_type") @db.VarChar(30)
+  sourcePurchaseId   String    @map("source_purchase_id") @db.Uuid
+  grossCoin          Int       @map("gross_coin")
+  writerSharePercent Decimal   @map("writer_share_percent") @db.Decimal(5, 2)
+  creatorCoin        Int       @map("creator_coin")
+  platformCoin       Int       @map("platform_coin")
+  status             String    @default("available") @db.VarChar(20)
+  payoutRequestId    String?   @map("payout_request_id") @db.Uuid
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt          DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  creator       User           @relation("EarningCreator", fields: [creatorId], references: [userId], onDelete: Restrict)
+  novel         Novel          @relation(fields: [novelId], references: [novelId], onDelete: Restrict)
+  chapter       Chapter?       @relation(fields: [chapterId], references: [chapterId], onDelete: SetNull)
+  payoutRequest PayoutRequest? @relation(fields: [payoutRequestId], references: [payoutRequestId], onDelete: SetNull)
+
+  @@index([creatorId], map: "ix_creator_earnings_creator_id")
+  @@index([novelId], map: "ix_creator_earnings_novel_id")
+  @@index([status], map: "ix_creator_earnings_status")
+  @@index([sourceType, sourcePurchaseId], map: "ix_creator_earnings_source")
+  @@map("creator_earnings")
+}
+
+model PayoutRequest {
+  payoutRequestId     String    @id @default(dbgenerated("gen_random_uuid()")) @map("payout_request_id") @db.Uuid
+  creatorId           BigInt    @map("creator_id")
+  requestedAmount     Decimal   @map("requested_amount") @db.Decimal(12, 2)
+  requestedCoinTotal  Int?      @map("requested_coin_total")
+  status              String    @default("pending") @db.VarChar(20)
+  requestedAt         DateTime  @default(now()) @map("requested_at") @db.Timestamptz(6)
+  reviewedBy          BigInt?   @map("reviewed_by")
+  reviewedAt          DateTime? @map("reviewed_at") @db.Timestamptz(6)
+  rejectionReason     String?   @map("rejection_reason") @db.Text
+  paidAt              DateTime? @map("paid_at") @db.Timestamptz(6)
+  paymentRef          String?   @map("payment_ref") @db.VarChar(255)
+  createdAt           DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  creator  User            @relation("PayoutRequestCreator", fields: [creatorId], references: [userId], onDelete: Restrict)
+  reviewer User?           @relation("PayoutRequestReviewer", fields: [reviewedBy], references: [userId], onDelete: SetNull)
+  earnings CreatorEarning[]
+  payouts  Payout[]
+
+  @@index([creatorId], map: "ix_payout_requests_creator_id")
+  @@index([status], map: "ix_payout_requests_status")
+  @@index([requestedAt], map: "ix_payout_requests_requested_at")
+  @@map("payout_requests")
+}
+
+model Payout {
+  payoutId         String    @id @default(dbgenerated("gen_random_uuid()")) @map("payout_id") @db.Uuid
+  payoutRequestId  String    @map("payout_request_id") @db.Uuid
+  userId           BigInt    @map("user_id")
+  amountMoneyPaid  Decimal   @map("amount_money_paid") @db.Decimal(12, 2)
+  feeAmount        Decimal   @default(0) @map("fee_amount") @db.Decimal(12, 2)
+  netAmount        Decimal   @map("net_amount") @db.Decimal(12, 2)
+  paymentMethod    String    @default("bank_transfer") @map("payment_method") @db.VarChar(30)
+  transactionRef   String?   @map("transaction_ref") @db.VarChar(255)
+  note             String?   @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  payoutRequest PayoutRequest @relation(fields: [payoutRequestId], references: [payoutRequestId], onDelete: Restrict)
+  user          User          @relation(fields: [userId], references: [userId], onDelete: Restrict)
+
+  @@index([userId], map: "ix_payouts_user_id")
+  @@index([payoutRequestId], map: "ix_payouts_request_id")
+  @@index([createdAt], map: "ix_payouts_created_at")
+  @@map("payouts")
+}
+
+model NovelModerationLog {
+  reviewId     String    @id @default(dbgenerated("gen_random_uuid()")) @map("review_id") @db.Uuid
+  novelId      BigInt    @map("novel_id")
+  adminUserId  BigInt    @map("admin_user_id")
+  action       String    @db.VarChar(20)
+  reason       String?   @db.Text
+  createdAt    DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  novel     Novel @relation(fields: [novelId], references: [novelId], onDelete: Cascade)
+  adminUser User  @relation("ModerationAdmin", fields: [adminUserId], references: [userId], onDelete: Restrict)
+
+  @@index([novelId], map: "ix_novel_moderation_logs_novel_id")
+  @@index([adminUserId], map: "ix_novel_moderation_logs_admin_user_id")
+  @@index([createdAt], map: "ix_novel_moderation_logs_created_at")
+  @@map("novel_moderation_logs")
+}
+
+model Comment {
+  commentId        String    @id @default(dbgenerated("gen_random_uuid()")) @map("comment_id") @db.Uuid
+  userId           BigInt    @map("user_id")
+  novelId          BigInt?   @map("novel_id")
+  chapterId        BigInt?   @map("chapter_id")
+  content          String    @db.Text
+  status           String    @default("visible") @db.VarChar(20)
+  parentCommentId  String?   @map("parent_comment_id") @db.Uuid
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user          User      @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  novel         Novel?    @relation(fields: [novelId], references: [novelId], onDelete: Cascade)
+  chapter       Chapter?  @relation(fields: [chapterId], references: [chapterId], onDelete: Cascade)
+  parentComment Comment?  @relation("CommentReplies", fields: [parentCommentId], references: [commentId], onDelete: Cascade)
+  replies       Comment[] @relation("CommentReplies")
+
+  @@index([userId], map: "ix_comments_user_id")
+  @@index([novelId], map: "ix_comments_novel_id")
+  @@index([chapterId], map: "ix_comments_chapter_id")
+  @@index([status], map: "ix_comments_status")
+  @@index([parentCommentId], map: "ix_comments_parent")
+  @@map("comments")
+}
+
+model Notification {
+  notificationId String    @id @default(dbgenerated("gen_random_uuid()")) @map("notification_id") @db.Uuid
+  userId         BigInt    @map("user_id")
+  type           String    @db.VarChar(50)
+  title          String    @db.VarChar(255)
+  message        String    @db.Text
+  isRead         Boolean   @default(false) @map("is_read")
+  readAt         DateTime? @map("read_at") @db.Timestamptz(6)
+  refType        String?   @map("ref_type") @db.VarChar(50)
+  refId          String?   @map("ref_id") @db.VarChar(100)
+  createdAt      DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId], map: "ix_notifications_user_id")
+  @@index([userId, isRead], map: "ix_notifications_user_unread")
+  @@index([createdAt], map: "ix_notifications_created_at")
+  @@map("notifications")
+}
+
+model UserReport {
+  reportId         String    @id @default(dbgenerated("gen_random_uuid()")) @map("report_id") @db.Uuid
+  reporterUserId   BigInt    @map("reporter_user_id")
+  targetType       String    @map("target_type") @db.VarChar(30)
+  targetId         String    @map("target_id") @db.VarChar(100)
+  reason           String    @db.Text
+  status           String    @default("open") @db.VarChar(20)
+  handledBy        BigInt?   @map("handled_by")
+  handledAt        DateTime? @map("handled_at") @db.Timestamptz(6)
+  resolutionNote   String?   @map("resolution_note") @db.Text
+  createdAt        DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  reporter User  @relation("ReportReporter", fields: [reporterUserId], references: [userId], onDelete: Cascade)
+  handler  User? @relation("ReportHandler", fields: [handledBy], references: [userId], onDelete: SetNull)
+
+  @@index([reporterUserId], map: "ix_user_reports_reporter")
+  @@index([status], map: "ix_user_reports_status")
+  @@index([targetType, targetId], map: "ix_user_reports_target")
+  @@map("user_reports")
+}
+
+model CreatorPayoutAccount {
+  payoutAccountId      String    @id @default(dbgenerated("gen_random_uuid()")) @map("payout_account_id") @db.Uuid
+  userId               BigInt    @map("user_id")
+  accountType          String    @map("account_type") @db.VarChar(20)
+  bankName             String?   @map("bank_name") @db.VarChar(100)
+  accountName          String?   @map("account_name") @db.VarChar(255)
+  accountNumberMasked  String?   @map("account_number_masked") @db.VarChar(50)
+  promptpayIdMasked    String?   @map("promptpay_id_masked") @db.VarChar(50)
+  accountNumberEnc     String?   @map("account_number_enc") @db.Text
+  promptpayIdEnc       String?   @map("promptpay_id_enc") @db.Text
+  isDefault            Boolean   @default(false) @map("is_default")
+  status               String    @default("active") @db.VarChar(20)
+  createdAt            DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt            DateTime  @default(now()) @map("updated_at") @db.Timestamptz(6)
+
+  user User @relation(fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId], map: "ix_creator_payout_accounts_user_id")
+  @@map("creator_payout_accounts")
+}
