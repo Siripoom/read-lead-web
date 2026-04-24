@@ -24,12 +24,14 @@ type StoredEpisode = {
   number: number;
   title: string;
   type: CreatorWorkType;
+  status: "draft" | "scheduled" | "published";
   price: "free" | number;
   promotion?: {
     discountPercent: number;
     startDate: string;
     endDate: string;
   };
+  releaseDate: string;
   typeSpecificData: {
     content?: string;
     wordCount?: number;
@@ -264,6 +266,48 @@ test.describe("Creator Studio — creator role", () => {
     await expect(page.getByText("ตอนที่ 1: ตอนเปิดเรื่อง ฉบับแก้ไข")).toHaveCount(0);
   });
 
+  test("creator can edit novel content from the episode list without changing metadata", async ({ page }) => {
+    await createCreatorWork(page, "novel", "Content Edit Work");
+    await openNewEpisodeForm(page);
+
+    await page.getByPlaceholder("ตั้งชื่อตอน").fill("ตอนเนื้อหาหลัก");
+    await page.getByTestId("episode-price-mode").selectOption("paid");
+    await page.getByTestId("episode-coin-price").fill("4");
+    await Promise.all([
+      page.waitForURL(/\/creator\/works\/work-[^/]+$/, { waitUntil: "commit" }),
+      page.getByRole("button", { name: "บันทึกและเผยแพร่" }).click(),
+    ]);
+
+    const beforeEdit = await getStoredEpisode(page, "ตอนเนื้อหาหลัก");
+    await Promise.all([
+      page.waitForURL(/\/creator\/works\/work-.*\/episodes\/.*\/content$/, {
+        waitUntil: "commit",
+      }),
+      page
+        .getByRole("row", { name: /ตอนที่ 1: ตอนเนื้อหาหลัก/ })
+        .getByRole("button", { name: "แก้ไขเนื้อหา" })
+        .click(),
+    ]);
+
+    await expect(page.getByRole("heading", { name: /แก้ไขเนื้อหา/ })).toBeVisible();
+    const editor = page.locator(".ProseMirror").first();
+    await editor.fill("Updated content from content-only page");
+
+    await Promise.all([
+      page.waitForURL(/\/creator\/works\/work-[^/]+$/, { waitUntil: "commit" }),
+      page.getByRole("button", { name: "บันทึกเนื้อหา" }).click(),
+    ]);
+
+    const afterEdit = await getStoredEpisode(page, "ตอนเนื้อหาหลัก");
+    expect(afterEdit?.typeSpecificData.content).toContain(
+      "Updated content from content-only page"
+    );
+    expect(afterEdit?.title).toBe(beforeEdit?.title);
+    expect(afterEdit?.status).toBe(beforeEdit?.status);
+    expect(afterEdit?.price).toBe(beforeEdit?.price);
+    expect(afterEdit?.releaseDate).toBe(beforeEdit?.releaseDate);
+  });
+
   test("creator can upload multiple manga pages and persist reordered pages", async ({ page }) => {
     const firstPageDataUrl = dataUrl("image/svg+xml", mangaPageOne);
     const secondPageDataUrl = dataUrl("image/svg+xml", mangaPageTwo);
@@ -345,6 +389,22 @@ test.describe("Creator Studio — creator role", () => {
       ["ตอนภาพ", "manga"],
       ["ตอนเสียง", "audiobook"],
     ]);
+
+    await expect(
+      page
+        .getByRole("row", { name: /ตอนที่ 1: ตอนบรรยาย/ })
+        .getByRole("button", { name: "แก้ไขเนื้อหา" })
+    ).toHaveCount(1);
+    await expect(
+      page
+        .getByRole("row", { name: /ตอนที่ 2: ตอนภาพ/ })
+        .getByRole("button", { name: "แก้ไขเนื้อหา" })
+    ).toHaveCount(0);
+    await expect(
+      page
+        .getByRole("row", { name: /ตอนที่ 3: ตอนเสียง/ })
+        .getByRole("button", { name: "แก้ไขเนื้อหา" })
+    ).toHaveCount(0);
   });
 
   test("creator can import multiple novel TXT files and edit imported content", async ({ page }) => {
@@ -398,12 +458,12 @@ test.describe("Creator Studio — creator role", () => {
     );
 
     await Promise.all([
-      page.waitForURL(/\/creator\/works\/work-.*\/episodes\/.*\/edit$/, {
+      page.waitForURL(/\/creator\/works\/work-.*\/episodes\/.*\/content$/, {
         waitUntil: "commit",
       }),
       page
         .getByRole("row", { name: /ตอนที่ 1: chapter-two/ })
-        .getByRole("button", { name: "แก้ไขตอน" })
+        .getByRole("button", { name: "แก้ไขเนื้อหา" })
         .click(),
     ]);
 
@@ -413,7 +473,7 @@ test.describe("Creator Studio — creator role", () => {
 
     await Promise.all([
       page.waitForURL(/\/creator\/works\/work-[^/]+$/, { waitUntil: "commit" }),
-      page.getByRole("button", { name: "บันทึกตามสถานะที่เลือก" }).click(),
+      page.getByRole("button", { name: "บันทึกเนื้อหา" }).click(),
     ]);
 
     const editedEpisodes = await getStoredEpisodesForWork(page, "Novel TXT Import Work");
@@ -453,10 +513,10 @@ test.describe("Creator Studio — creator role", () => {
     expect(savedEpisode?.typeSpecificData.layoutHtml).toContain("DOCX layout paragraph");
 
     await Promise.all([
-      page.waitForURL(/\/creator\/works\/work-.*\/episodes\/.*\/edit$/, {
+      page.waitForURL(/\/creator\/works\/work-.*\/episodes\/.*\/content$/, {
         waitUntil: "commit",
       }),
-      page.getByRole("button", { name: "แก้ไขตอน" }).click(),
+      page.getByRole("button", { name: "แก้ไขเนื้อหา" }).click(),
     ]);
 
     await expect(page.getByText("ตัวอย่าง DOCX แบบรักษาหน้ากระดาษ")).toBeVisible();

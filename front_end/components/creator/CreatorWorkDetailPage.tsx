@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, Edit3, Plus, Trash2 } from "lucide-react";
+import { ArrowLeft, Edit3, FileText, Plus, Trash2 } from "lucide-react";
 import Badge from "@/components/ui/Badge";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
@@ -229,7 +229,20 @@ export default function CreatorWorkDetailPage({ workId }: { workId: string }) {
                       </td>
                       <td className="px-5 py-4 text-text-muted">{episode.releaseDate}</td>
                       <td className="px-5 py-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          {episode.type === "novel" && (
+                            <Button
+                              size="sm"
+                              onClick={() =>
+                                router.push(
+                                  `/creator/works/${work.id}/episodes/${episode.id}/content`
+                                )
+                              }
+                            >
+                              <FileText size={14} />
+                              แก้ไขเนื้อหา
+                            </Button>
+                          )}
                           <Button
                             size="sm"
                             variant="secondary"
